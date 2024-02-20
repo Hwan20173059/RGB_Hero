@@ -19,17 +19,21 @@ public class TalkManager : MonoBehaviour
     void GenerateData()
     {
         talkData.Add(100, new string[] { "슬라임이라니 식은죽 먹기잖아?:1", "룰렛을 가동시켜 공격하자:0" });
-        talkData.Add(200, new string[] { "역시 식은 죽 먹기라니까:0", "이대로 계속 가보자고:1" });
-        talkData.Add(300, new string[] { "초원을 계속 걸으면 기분이 산뜻해져:0", "이대로 계속 걸어가고 싶군:1", "계속 진행해보자고:2" });
+        talkData.Add(200, new string[] { "이런 체력이 꽤 많이 줄어들었는걸?:0", "이럴줄 알고 가방에 과일을 좀 가져왔지:1", "가방 버튼을 통해 과일을 먹어 체력을 회복할 수 있어:0" });
+        talkData.Add(300, new string[] { "슬슬 해가 지기 시작하는군:0", "몬스터들도 점점 더 강해지는거 같아:1", "조심해서 계속 가보자고:2" });
         talkData.Add(400, new string[] { "여기가 초원의 막바지인가..:0", "어엇.. 저것은..?:1", "절망해라..:2" });
 
         portraitData.Add(100 + 0, portraitArr[0]);
         portraitData.Add(100 + 1, portraitArr[1]);
+
         portraitData.Add(200 + 0, portraitArr[2]);
         portraitData.Add(200 + 1, portraitArr[3]);
+        portraitData.Add(200 + 2, portraitArr[2]);
+
         portraitData.Add(300 + 0, portraitArr[4]);
         portraitData.Add(300 + 1, portraitArr[5]);
         portraitData.Add(300 + 2, portraitArr[6]);
+
         portraitData.Add(400 + 0, portraitArr[7]);
         portraitData.Add(400 + 1, portraitArr[8]);
         portraitData.Add(400 + 2, portraitArr[9]);

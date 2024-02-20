@@ -317,7 +317,7 @@ public class GameManager : MonoBehaviour
                 StartCoroutine(NEXTSTAGE());
             }
         }
-        else if (Stage == 5)
+        else if (Stage == 6)
         {
             if (talkData == null)
             {
@@ -338,10 +338,9 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        
         talkText.SetMsg(talkData.Split(':')[0]);
-
         portraitImg.sprite = talkManager.GetPortrait(textId, int.Parse(talkData.Split(':')[1]));
+
         if (prevSprite != portraitImg.sprite)
         {
             portraitEffect.SetTrigger("doEffect");
@@ -372,7 +371,7 @@ public class GameManager : MonoBehaviour
                 textId = 200;
                 StartCoroutine(TALK(textId));
             }
-            else if (Stage == 5)
+            else if (Stage == 6)
             {
                 textId = 300;
                 StartCoroutine(TALK(textId));
@@ -431,13 +430,13 @@ public class GameManager : MonoBehaviour
         }
         else if (AttackType1 == 1 && AttackType2 == 1 && AttackType3 == 1)
         {
-            PlayerAnim.SetBool("BBBAttack", true);
+            PlayerAnim.SetBool("GGGAttack", true);
             EnemyAnim.SetBool("isHit", true);
             soundManager.PlaySound("Attack");
         }
         else if (AttackType1 == 2 && AttackType2 == 2 && AttackType3 == 2)
         {
-            PlayerAnim.SetBool("GGGAttack", true);
+            PlayerAnim.SetBool("BBBAttack", true);
             EnemyAnim.SetBool("isHit", true);
             soundManager.PlaySound("Attack");
         }
@@ -459,13 +458,13 @@ public class GameManager : MonoBehaviour
         }
         else if (AttackType1 == 1 && AttackType2 == 1 && AttackType3 == 1)
         {
-            PlayerAnim.SetBool("BBBAttack", false);
+            PlayerAnim.SetBool("GGGAttack", false);
             EnemyAnim.SetBool("isHit", false);
             soundManager.PlaySound("Hit");
         }
         else if (AttackType1 == 2 && AttackType2 == 2 && AttackType3 == 2)
         {
-            PlayerAnim.SetBool("GGGAttack", false);
+            PlayerAnim.SetBool("BBBAttack", false);
             EnemyAnim.SetBool("isHit", false);
             soundManager.PlaySound("Hit");
         }
