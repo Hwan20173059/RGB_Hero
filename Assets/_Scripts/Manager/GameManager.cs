@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.Eventing.Reader;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -8,6 +9,14 @@ public enum BattleState { START, PLAYERTURN, ENEMYTURN, TALK, NEXTSTAGE, WON, LO
 
 public class GameManager : MonoBehaviour
 {
+    [Header("Manager")]
+    public RoulletManager roulletManager;
+    public TalkManager talkManager;
+    public SoundManager soundManager;
+
+    [Header("State")]
+    public BattleState state;
+
     [Header("Stage")]
     public int Stage = 1;
 
@@ -20,16 +29,6 @@ public class GameManager : MonoBehaviour
     [Header("Prefab")]
     public GameObject playerPrefab;
 	public GameObject[] enemyPrefab;
-
-    [Header("Roullet")]
-    public Text Roullet1;
-    public Text Roullet2;
-    public Text Roullet3;
-
-    public Text RP;
-    public Text GP;
-    public Text BP;
-    public Text PointText;
 
     [Header("Battle Field")]
     public Transform playerBattleStation;
@@ -48,8 +47,6 @@ public class GameManager : MonoBehaviour
     public Text EXPText;
 
     [Header("Talk UI")]
-    public TalkManager talkManager;
-
     public Image portraitImg;
     public Animator portraitEffect;
     public Sprite prevSprite;
@@ -68,16 +65,10 @@ public class GameManager : MonoBehaviour
     [Header("Type Effect")]
     public TypeEffect talkText;
 
-    [Header("State")]
-    public BattleState state;
-
-    [Header("Bag")]
+    [Header("Inventory")]
     public int Fruit;
     public Text FruitText;
 
-    [Header("Sound")]
-    public AudioSource Audio;
-	public AudioClip Attack, Hit, Clear, Button;
 
     void Start()
     {
@@ -103,10 +94,10 @@ public class GameManager : MonoBehaviour
 
         // 레벨, 스텟, 스텟포인트 표시
         PlayerLevel.text = playerUnit.unitLevel.ToString();
-        RP.text = playerUnit.RP.ToString();
-        GP.text = playerUnit.GP.ToString();
-        BP.text = playerUnit.BP.ToString();
-        PointText.text = "Point : " + playerUnit.StatPoint.ToString();
+        roulletManager.RP.text = playerUnit.RP.ToString();
+        roulletManager.GP.text = playerUnit.GP.ToString();
+        roulletManager.BP.text = playerUnit.BP.ToString();
+        roulletManager.PointText.text = "Point : " + playerUnit.StatPoint.ToString();
         playerHUD.SetHUD(playerUnit);
 
         // 가방 아이템 텍스트
@@ -116,7 +107,7 @@ public class GameManager : MonoBehaviour
         StageText.text = "Stage " + Stage.ToString();
     }
 
-    // 첫 전투 (튜토리얼)
+    // 첫 전투 (튜토리얼은 슬라임 enemyPrefab[0] 확정 등장)
     IEnumerator SetupBattle()
 	{
         GameObject playerGO = Instantiate(playerPrefab, playerBattleStation);
@@ -142,150 +133,72 @@ public class GameManager : MonoBehaviour
     // 룰렛 버튼 가동
     IEnumerator PlayerAttack()
 	{
-        Audio.PlayOneShot(Button);
+        soundManager.PlaySound("Button");
 
         if (isCombat)
 		{
             isCombat = false;
-            int TotalDamage = 0;
 
-			int AttackType1 = Random.Range(0, 3);
+            int TotalDamage = 0;
+            bool isDead = true;
+
+            // 공격 타입 랜덤 결정
+            int AttackType1 = Random.Range(0, 3);
 			int AttackType2 = Random.Range(0, 3);
 			int AttackType3 = Random.Range(0, 3);
 
-			// 데미지 계산 처리
-			if (AttackType1 == 0) { TotalDamage += playerUnit.RP; }
-			else if (AttackType1 == 1) { TotalDamage += playerUnit.BP; }
-			else { TotalDamage += playerUnit.GP; }
+            // 총 데미지 계산
+            TotalDamage += AttackType(AttackType1);
+            TotalDamage += AttackType(AttackType2);
+            TotalDamage += AttackType(AttackType3);            
 
-			if (AttackType2 == 0) { TotalDamage += playerUnit.RP; }
-			else if (AttackType2 == 1) { TotalDamage += playerUnit.BP; }
-			else { TotalDamage += playerUnit.GP; }
-
-			if (AttackType3 == 0) { TotalDamage += playerUnit.RP; }
-			else if (AttackType3 == 1) { TotalDamage += playerUnit.BP; }
-			else { TotalDamage += playerUnit.GP; }
-
-			// 적 처치 상태 bool 처리
-			bool isDead = enemyUnit.TakeDamage(TotalDamage);
 
             // 룰렛 텍스트 처리
             dialogueText.text = "룰렛 가동!";
 
             yield return new WaitForSeconds(1.5f);
 
-            if (AttackType1 == 0) { Roullet1.text = "<color=red>R</color>"; }
-			else if (AttackType1 == 1) { Roullet1.text = "<color=blue>B</color>"; }
-			else { Roullet1.text = "<color=green>G</color>"; }
-			Audio.PlayOneShot(Button);
+            roulletManager.RoulletText(roulletManager.Roullet1,AttackType1);
+            soundManager.PlaySound("Button");
 
             yield return new WaitForSeconds(0.5f);
 
-            if (AttackType2 == 0) { Roullet2.text = "<color=red>R</color>"; }
-			else if (AttackType2 == 1) { Roullet2.text = "<color=blue>B</color>"; }
-			else { Roullet2.text = "<color=green>G</color>"; }
-            Audio.PlayOneShot(Button);
+            roulletManager.RoulletText(roulletManager.Roullet2, AttackType2);
+            soundManager.PlaySound("Button");
 
             yield return new WaitForSeconds(0.5f);
 
-			if (AttackType3 == 0) { Roullet3.text = "<color=red>R</color>"; }
-			else if (AttackType3 == 1) { Roullet3.text = "<color=blue>B</color>"; }
-			else { Roullet3.text = "<color=green>G</color>"; }
-            Audio.PlayOneShot(Button);
+            roulletManager.RoulletText(roulletManager.Roullet3, AttackType3);
+            soundManager.PlaySound("Button");
 
+
+            // 타입에 따른 공격 처리 텍스트 표시 ( RRR, GGG, BBB 특수 패턴 + 일반 패턴 )
+            AttackText(AttackType1, AttackType2, AttackType3);
             yield return new WaitForSeconds(0.5f);
 
-            // 특수 공격 발동 (RRR, GGG, BBB)
-            if (AttackType1 == 0 && AttackType2 == 0 && AttackType3 == 0)
+            AttackAction(AttackType1, AttackType2, AttackType3);
+            yield return new WaitForSeconds(1f);
+
+            HitAction(AttackType1, AttackType2, AttackType3);
+
+            if (AttackType1 == AttackType2 && AttackType2 == AttackType3)
             {
-                dialogueText.text = "인페르노 레드!!";
-
-                yield return new WaitForSeconds(1f);
-
-                // 애니메이션 처리
-                PlayerAnim.SetBool("RRRAttack", true);
-                EnemyAnim.SetBool("isHit", true);
-                Audio.PlayOneShot(Attack);
-
-                yield return new WaitForSeconds(1f);
-
-                PlayerAnim.SetBool("RRRAttack", false);
-                EnemyAnim.SetBool("isHit", false);
-                Audio.PlayOneShot(Hit);
-
-                isDead = enemyUnit.TakeDamage(TotalDamage);
-
+                isDead = enemyUnit.TakeDamage(TotalDamage * 2);
                 dialogueText.text = TotalDamage * 2 + "의 데미지!";
-                enemyHUD.SetHP(enemyUnit.currentHP);
             }
-            else if (AttackType1 == 1 && AttackType2 == 1 && AttackType3 == 1)
+            else
             {
-                dialogueText.text = "레비아탄 블루!!";
-
-                yield return new WaitForSeconds(1f);
-
-                // 애니메이션 처리
-                PlayerAnim.SetBool("BBBAttack", true);
-                EnemyAnim.SetBool("isHit", true);
-                Audio.PlayOneShot(Attack);
-
-                yield return new WaitForSeconds(1f);
-
-                PlayerAnim.SetBool("BBBAttack", false);
-                EnemyAnim.SetBool("isHit", false);
-                Audio.PlayOneShot(Hit);
-
                 isDead = enemyUnit.TakeDamage(TotalDamage);
-
-                dialogueText.text = TotalDamage * 2 + "의 데미지!";
-                enemyHUD.SetHP(enemyUnit.currentHP);
-            }
-            else if (AttackType1 == 2 && AttackType2 == 2 && AttackType3 == 2)
-            {
-                dialogueText.text = "토네이도 그린!!";
-
-                yield return new WaitForSeconds(1f);
-
-                // 애니메이션 처리
-                PlayerAnim.SetBool("GGGAttack", true);
-                EnemyAnim.SetBool("isHit", true);
-                Audio.PlayOneShot(Attack);
-
-                yield return new WaitForSeconds(1f);
-
-                PlayerAnim.SetBool("GGGAttack", false);
-                EnemyAnim.SetBool("isHit", false);
-                Audio.PlayOneShot(Hit);
-
-                isDead = enemyUnit.TakeDamage(TotalDamage);
-
-                dialogueText.text = TotalDamage * 2 + "의 데미지!";
-                enemyHUD.SetHP(enemyUnit.currentHP);
-            }
-            else // 일반 공격
-            {
-                // 애니메이션 처리
-                PlayerAnim.SetBool("isAttack", true);
-                EnemyAnim.SetBool("isHit", true);
-                Audio.PlayOneShot(Attack);
-
-                yield return new WaitForSeconds(1f);
-
-                PlayerAnim.SetBool("isAttack", false);
-                EnemyAnim.SetBool("isHit", false);
-                Audio.PlayOneShot(Hit);
-
-                // 로그 출력 처리
                 dialogueText.text = TotalDamage + "의 데미지!";
-                enemyHUD.SetHP(enemyUnit.currentHP);
             }
 
+
+            // 타입에 따른 공격 처리
+            enemyHUD.SetHP(enemyUnit.currentHP);
             yield return new WaitForSeconds(1f);
 
             // 룰렛 비우기
-            Roullet1.text = " ";
-            Roullet2.text = " ";
-            Roullet3.text = " ";
+            roulletManager.RoulletClear();
 
             // 사망 처리 검사
             if (isDead)
@@ -307,7 +220,7 @@ public class GameManager : MonoBehaviour
 		dialogueText.text = enemyUnit.unitName + "의 공격!";
         EnemyAnim.SetBool("isAttack", true);
         PlayerAnim.SetBool("isHit", true);
-        Audio.PlayOneShot(Attack);
+        soundManager.PlaySound("Attack");
 
         yield return new WaitForSeconds(1f);
         EnemyAnim.SetBool("isAttack", false);
@@ -316,7 +229,7 @@ public class GameManager : MonoBehaviour
         dialogueText.text = enemyUnit.damage + "의 데미지!";
         bool isDead = playerUnit.TakeDamage(enemyUnit.damage);
 		playerHUD.SetHP(playerUnit.currentHP);
-        Audio.PlayOneShot(Hit);
+        soundManager.PlaySound("Hit");
 
         yield return new WaitForSeconds(1f);
 
@@ -451,7 +364,7 @@ public class GameManager : MonoBehaviour
 
             Stage++;
 
-            Audio.PlayOneShot(Clear);
+            soundManager.PlaySound("Clear");
 
             // 지정된 스테이지를 클리어 할시 Talk 이벤트 발생
             if (Stage == 2)
@@ -483,8 +396,89 @@ public class GameManager : MonoBehaviour
         }
 	}
 
+
+    int AttackType(int AttackType)
+    {
+        if (AttackType == 0)
+            return playerUnit.RP;
+        else if (AttackType == 1)
+            return playerUnit.GP;
+        else if (AttackType == 2)
+            return playerUnit.BP;
+        else
+            return 0;
+    }
+
+    public void AttackText(int AttackType1, int AttackType2, int AttackType3)
+    {
+        if (AttackType1 == 0 && AttackType2 == 0 && AttackType3 == 0)
+            dialogueText.text = "인페르노 레드!!";
+        else if (AttackType1 == 1 && AttackType2 == 1 && AttackType3 == 1)
+            dialogueText.text = "토네이도 그린!!";
+        else if (AttackType1 == 2 && AttackType2 == 2 && AttackType3 == 2)
+            dialogueText.text = "레비아탄 블루!!";
+        else
+            return;
+    }
+
+    public void AttackAction(int AttackType1, int AttackType2, int AttackType3)
+    {
+        if (AttackType1 == 0 && AttackType2 == 0 && AttackType3 == 0)
+        {
+            PlayerAnim.SetBool("RRRAttack", true);
+            EnemyAnim.SetBool("isHit", true);
+            soundManager.PlaySound("Attack");
+        }
+        else if (AttackType1 == 1 && AttackType2 == 1 && AttackType3 == 1)
+        {
+            PlayerAnim.SetBool("BBBAttack", true);
+            EnemyAnim.SetBool("isHit", true);
+            soundManager.PlaySound("Attack");
+        }
+        else if (AttackType1 == 2 && AttackType2 == 2 && AttackType3 == 2)
+        {
+            PlayerAnim.SetBool("GGGAttack", true);
+            EnemyAnim.SetBool("isHit", true);
+            soundManager.PlaySound("Attack");
+        }
+        else 
+        {
+            PlayerAnim.SetBool("isAttack", true);
+            EnemyAnim.SetBool("isHit", true);
+            soundManager.PlaySound("Attack");
+        }
+    }
+
+    public void HitAction(int AttackType1, int AttackType2, int AttackType3)
+    {
+        if (AttackType1 == 0 && AttackType2 == 0 && AttackType3 == 0)
+        {
+            PlayerAnim.SetBool("RRRAttack", false);
+            EnemyAnim.SetBool("isHit", false);
+            soundManager.PlaySound("Hit");
+        }
+        else if (AttackType1 == 1 && AttackType2 == 1 && AttackType3 == 1)
+        {
+            PlayerAnim.SetBool("BBBAttack", false);
+            EnemyAnim.SetBool("isHit", false);
+            soundManager.PlaySound("Hit");
+        }
+        else if (AttackType1 == 2 && AttackType2 == 2 && AttackType3 == 2)
+        {
+            PlayerAnim.SetBool("GGGAttack", false);
+            EnemyAnim.SetBool("isHit", false);
+            soundManager.PlaySound("Hit");
+        }
+        else
+        {
+            PlayerAnim.SetBool("isAttack", false);
+            EnemyAnim.SetBool("isHit", false);
+            soundManager.PlaySound("Hit");
+        }
+    }
+
     // 플레이어 턴 (조작 가능)
-	void PlayerTurn()
+    void PlayerTurn()
 	{
 		isCombat = true;
         dialogueText.text = "무엇을 할까? ";
@@ -510,7 +504,7 @@ public class GameManager : MonoBehaviour
     {
         if (isCombat)
         {
-            Audio.PlayOneShot(Button);
+            soundManager.PlaySound("Button");
             StatUI.SetActive(true);
         }
     }
@@ -518,7 +512,7 @@ public class GameManager : MonoBehaviour
     // 스텟 UI 나가기 버튼 클릭시
     public void UICloseButtonClick()
     {
-        Audio.PlayOneShot(Button);
+        soundManager.PlaySound("Button");
         StatUI.SetActive(false);
     }
 
@@ -527,7 +521,7 @@ public class GameManager : MonoBehaviour
     {
         if (playerUnit.StatPoint > 0)
         {
-            Audio.PlayOneShot(Button);
+            soundManager.PlaySound("Button");
             playerUnit.RP++;
             playerUnit.StatPoint--;
         }
@@ -539,7 +533,7 @@ public class GameManager : MonoBehaviour
     {
         if (playerUnit.StatPoint > 0)
         {
-            Audio.PlayOneShot(Button);
+            soundManager.PlaySound("Button");
             playerUnit.GP++;
             playerUnit.StatPoint--;
         }
@@ -551,7 +545,7 @@ public class GameManager : MonoBehaviour
     {
         if (playerUnit.StatPoint > 0)
         {
-            Audio.PlayOneShot(Button);
+            soundManager.PlaySound("Button");
             playerUnit.BP++;
             playerUnit.StatPoint--;
         }
@@ -561,14 +555,14 @@ public class GameManager : MonoBehaviour
     // 메뉴 버튼 클릭
     public void MenuButtonClick()
     {
-        Audio.PlayOneShot(Button);
+        soundManager.PlaySound("Button");
         GameMenuUI.SetActive(true);
     }
 
     // 메뉴 나가기 버튼
     public void MenuCloseButtonClick()
     {
-        Audio.PlayOneShot(Button);
+        soundManager.PlaySound("Button");
         GameMenuUI.SetActive(false);
     }
 
@@ -583,7 +577,7 @@ public class GameManager : MonoBehaviour
     {
         if (isCombat)
         {
-            Audio.PlayOneShot(Button);
+            soundManager.PlaySound("Button");
             GameBagUI.SetActive(true);
         }
     }
@@ -591,7 +585,7 @@ public class GameManager : MonoBehaviour
     // 가방 나가기 버튼
     public void BagCloseButtonClick()
     {
-        Audio.PlayOneShot(Button);
+        soundManager.PlaySound("Button");
         GameBagUI.SetActive(false);
     }
 
@@ -600,7 +594,7 @@ public class GameManager : MonoBehaviour
     { 
         if (Fruit > 0)
         {
-            Audio.PlayOneShot(Button);
+            soundManager.PlaySound("Button");
             playerUnit.currentHP += 10;
             Fruit--;
         }
