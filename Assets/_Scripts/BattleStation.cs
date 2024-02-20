@@ -7,13 +7,6 @@ public class BattleStation : MonoBehaviour
     public GameManager battlesystem;
     public Animator AnimBattleStation;
 
-
-    void Start()
-    {
-
-    }
-
-    // Update is called once per frame
     void Update()
     {
         if (battlesystem.Stage < 6)

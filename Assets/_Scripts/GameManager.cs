@@ -39,7 +39,7 @@ public class GameManager : MonoBehaviour
     public BattleHUD playerHUD;
     public BattleHUD enemyHUD;
 
-    [Header("UI")]
+    [Header("Battle UI")]
     public Text dialogueText;
     public Text StageText;
 
@@ -47,6 +47,7 @@ public class GameManager : MonoBehaviour
     public Slider EXPSlider;
     public Text EXPText;
 
+    [Header("Talk UI")]
     public TalkManager talkManager;
 
     public Image portraitImg;
@@ -88,6 +89,7 @@ public class GameManager : MonoBehaviour
 
     void Update()
     {
+        // 경험치 검사 및 레벨 업
         if (playerUnit.CurretEXP >= playerUnit.NeedEXP)
         {
             playerUnit.CurretEXP -= playerUnit.NeedEXP;
@@ -95,6 +97,11 @@ public class GameManager : MonoBehaviour
             playerUnit.StatPoint += 5;
         }
 
+        EXPSlider.maxValue = playerUnit.NeedEXP;
+        EXPSlider.value = playerUnit.CurretEXP;
+        EXPText.text = playerUnit.CurretEXP.ToString() + " / " + playerUnit.NeedEXP.ToString();
+
+        // 레벨, 스텟, 스텟포인트 표시
         PlayerLevel.text = playerUnit.unitLevel.ToString();
         RP.text = playerUnit.RP.ToString();
         GP.text = playerUnit.GP.ToString();
@@ -102,15 +109,14 @@ public class GameManager : MonoBehaviour
         PointText.text = "Point : " + playerUnit.StatPoint.ToString();
         playerHUD.SetHUD(playerUnit);
 
+        // 가방 아이템 텍스트
         FruitText.text = Fruit.ToString();
 
+        // 스테이지 표시
         StageText.text = "Stage " + Stage.ToString();
-
-        EXPSlider.maxValue = playerUnit.NeedEXP;
-        EXPSlider.value = playerUnit.CurretEXP;
-        EXPText.text = playerUnit.CurretEXP.ToString() + " / " + playerUnit.NeedEXP.ToString();
     }
 
+    // 첫 전투 (튜토리얼)
     IEnumerator SetupBattle()
 	{
         GameObject playerGO = Instantiate(playerPrefab, playerBattleStation);
@@ -132,6 +138,8 @@ public class GameManager : MonoBehaviour
         textId = 100;
         StartCoroutine(TALK(textId));
     }
+
+    // 룰렛 버튼 가동
     IEnumerator PlayerAttack()
 	{
         Audio.PlayOneShot(Button);
@@ -187,6 +195,7 @@ public class GameManager : MonoBehaviour
 
             yield return new WaitForSeconds(0.5f);
 
+            // 특수 공격 발동 (RRR, GGG, BBB)
             if (AttackType1 == 0 && AttackType2 == 0 && AttackType3 == 0)
             {
                 dialogueText.text = "인페르노 레드!!";
@@ -194,13 +203,13 @@ public class GameManager : MonoBehaviour
                 yield return new WaitForSeconds(1f);
 
                 // 애니메이션 처리
-                PlayerAnim.SetBool("isAttack", true);
+                PlayerAnim.SetBool("RRRAttack", true);
                 EnemyAnim.SetBool("isHit", true);
                 Audio.PlayOneShot(Attack);
 
                 yield return new WaitForSeconds(1f);
 
-                PlayerAnim.SetBool("isAttack", false);
+                PlayerAnim.SetBool("RRRAttack", false);
                 EnemyAnim.SetBool("isHit", false);
                 Audio.PlayOneShot(Hit);
 
@@ -216,13 +225,13 @@ public class GameManager : MonoBehaviour
                 yield return new WaitForSeconds(1f);
 
                 // 애니메이션 처리
-                PlayerAnim.SetBool("isAttack", true);
+                PlayerAnim.SetBool("BBBAttack", true);
                 EnemyAnim.SetBool("isHit", true);
                 Audio.PlayOneShot(Attack);
 
                 yield return new WaitForSeconds(1f);
 
-                PlayerAnim.SetBool("isAttack", false);
+                PlayerAnim.SetBool("BBBAttack", false);
                 EnemyAnim.SetBool("isHit", false);
                 Audio.PlayOneShot(Hit);
 
@@ -238,13 +247,13 @@ public class GameManager : MonoBehaviour
                 yield return new WaitForSeconds(1f);
 
                 // 애니메이션 처리
-                PlayerAnim.SetBool("isAttack", true);
+                PlayerAnim.SetBool("GGGAttack", true);
                 EnemyAnim.SetBool("isHit", true);
                 Audio.PlayOneShot(Attack);
 
                 yield return new WaitForSeconds(1f);
 
-                PlayerAnim.SetBool("isAttack", false);
+                PlayerAnim.SetBool("GGGAttack", false);
                 EnemyAnim.SetBool("isHit", false);
                 Audio.PlayOneShot(Hit);
 
@@ -253,7 +262,7 @@ public class GameManager : MonoBehaviour
                 dialogueText.text = TotalDamage * 2 + "의 데미지!";
                 enemyHUD.SetHP(enemyUnit.currentHP);
             }
-            else
+            else // 일반 공격
             {
                 // 애니메이션 처리
                 PlayerAnim.SetBool("isAttack", true);
@@ -278,18 +287,21 @@ public class GameManager : MonoBehaviour
             Roullet2.text = " ";
             Roullet3.text = " ";
 
+            // 사망 처리 검사
             if (isDead)
 			{
 				state = BattleState.WON;
 				EndBattle();
 			}
-			else
+			else // 턴 넘기기
 			{
 				state = BattleState.ENEMYTURN;
 				StartCoroutine(EnemyTurn());
 			}
 		}
     }
+
+    // 적의 턴
 	IEnumerator EnemyTurn()
 	{
 		dialogueText.text = enemyUnit.unitName + "의 공격!";
@@ -308,16 +320,20 @@ public class GameManager : MonoBehaviour
 
         yield return new WaitForSeconds(1f);
 
+        // 캐릭터 사망 처리 검사
 		if(isDead)
 		{
 			state = BattleState.LOST;
 			EndBattle();
-		} else
+		} 
+        else // 턴 넘기기
 		{
 			state = BattleState.PLAYERTURN;
 			PlayerTurn();
 		}
 	}
+
+    // 다음 스테이지 진행
     IEnumerator NEXTSTAGE()
 	{
         yield return new WaitForSeconds(1f);
@@ -329,10 +345,10 @@ public class GameManager : MonoBehaviour
 
         int n = 0;
 
+        // 스테이지에 따라 몬스터 랜덤 결정
         if (Stage == 10)
         {
-            n = 5;
-            
+            n = 5; // 보스 몬스터
         }
         else if (Stage < 10 && Stage >= 6) 
         {
@@ -343,6 +359,7 @@ public class GameManager : MonoBehaviour
             n = Random.Range(0, 3);
         }
 
+        // 몬스터 소환, 세팅
         GameObject enemyGO = Instantiate(enemyPrefab[n], enemyBattleStation);
         enemyUnit = enemyGO.GetComponent<Unit>();
         EnemyAnim = enemyGO.GetComponent<Animator>();
@@ -356,13 +373,17 @@ public class GameManager : MonoBehaviour
         state = BattleState.PLAYERTURN;
         PlayerTurn();
     }
+
+    // 대화 UI 상태
     IEnumerator TALK(int textId)
     {
         talkBackground.SetActive(true);
         talkPanel.SetBool("isShow",true);
 
+        // Talk Index를 받아 Talk UI 표시 (EndBattle 함수 참고)
         string talkData = talkManager.GetTalk(textId, talkIndex);
 
+        // Talk Data를 모두 사용할때 Talk UI를 종료함
         if (Stage == 1)
         {
             if (talkData == null)
@@ -404,6 +425,7 @@ public class GameManager : MonoBehaviour
             }
         }
 
+        
         talkText.SetMsg(talkData.Split(':')[0]);
 
         portraitImg.sprite = talkManager.GetPortrait(textId, int.Parse(talkData.Split(':')[1]));
@@ -416,7 +438,7 @@ public class GameManager : MonoBehaviour
         yield return new WaitForSeconds(0.1f);
     }
 
-
+    // 배틀에서 승리
     void EndBattle()
 	{
         if (state == BattleState.WON)
@@ -431,6 +453,7 @@ public class GameManager : MonoBehaviour
 
             Audio.PlayOneShot(Clear);
 
+            // 지정된 스테이지를 클리어 할시 Talk 이벤트 발생
             if (Stage == 2)
             {
                 textId = 200;
@@ -451,7 +474,7 @@ public class GameManager : MonoBehaviour
                 StartCoroutine(NEXTSTAGE());
             }
         } 
-		else if (state == BattleState.LOST)
+		else if (state == BattleState.LOST) // 배틀에서 졌을 때
 		{
             PlayerAnim.SetBool("isDie", true);
             dialogueText.text = "배틀에서 져버렸다...";
@@ -459,13 +482,15 @@ public class GameManager : MonoBehaviour
             Invoke("GameOver", 1f);
         }
 	}
+
+    // 플레이어 턴 (조작 가능)
 	void PlayerTurn()
 	{
 		isCombat = true;
         dialogueText.text = "무엇을 할까? ";
 	}
 
-
+    // 룰렛 가동 버튼 누를시
 	public void OnAttackButton()
 	{
 		if (state != BattleState.PLAYERTURN)
@@ -473,10 +498,14 @@ public class GameManager : MonoBehaviour
 
 		StartCoroutine(PlayerAttack());
 	}
+
+    // Text UI 클릭시
 	public void TextButtonClick()
 	{
         StartCoroutine(TALK(textId));
     }
+
+    // 스텟 버튼 클릭시
     public void StatButtonClick()
     {
         if (isCombat)
@@ -485,11 +514,15 @@ public class GameManager : MonoBehaviour
             StatUI.SetActive(true);
         }
     }
+
+    // 스텟 UI 나가기 버튼 클릭시
     public void UICloseButtonClick()
     {
         Audio.PlayOneShot(Button);
         StatUI.SetActive(false);
     }
+
+    // 스텟 R 포인트 상승 버튼
     public void RPup()
     {
         if (playerUnit.StatPoint > 0)
@@ -500,6 +533,8 @@ public class GameManager : MonoBehaviour
         }
         return;
     }
+
+    // 스텟 G 포인트 상승 버튼
     public void GPup()
     {
         if (playerUnit.StatPoint > 0)
@@ -510,6 +545,8 @@ public class GameManager : MonoBehaviour
         }
         return;
     }
+
+    // 스텟 B 포인트 상승 버튼
     public void BPup()
     {
         if (playerUnit.StatPoint > 0)
@@ -520,20 +557,28 @@ public class GameManager : MonoBehaviour
         }
         return;
     }
+
+    // 메뉴 버튼 클릭
     public void MenuButtonClick()
     {
         Audio.PlayOneShot(Button);
         GameMenuUI.SetActive(true);
     }
+
+    // 메뉴 나가기 버튼
     public void MenuCloseButtonClick()
     {
         Audio.PlayOneShot(Button);
         GameMenuUI.SetActive(false);
     }
+
+    // 경험치 세팅
     public void SetEXP(int EXP)
     {
         EXPSlider.value = EXP;
     }
+
+    // 가방 버튼 클릭
     public void BagButtonClick()
     {
         if (isCombat)
@@ -542,11 +587,15 @@ public class GameManager : MonoBehaviour
             GameBagUI.SetActive(true);
         }
     }
+
+    // 가방 나가기 버튼
     public void BagCloseButtonClick()
     {
         Audio.PlayOneShot(Button);
         GameBagUI.SetActive(false);
     }
+
+    // 과일 아이템 사용
     public void UseFruit()
     { 
         if (Fruit > 0)
@@ -557,18 +606,26 @@ public class GameManager : MonoBehaviour
         }
         return;
     }
+
+    // 게임 다시하기 버튼
     public void GaemRetry()
     {
         SceneManager.LoadScene("MainScene");
     }
+
+    // 게임 나가기 버튼
     public void GaemOver()
     {
         SceneManager.LoadScene("TitleScene");
     }
+
+    // 게임 오버 UI 출력
     void GameOver() 
     {
         GameOverUI.SetActive(true);
     }
+
+    // 메뉴 버튼 클릭
     void MenuButton()
     {
         GameMenuUI.SetActive(true);

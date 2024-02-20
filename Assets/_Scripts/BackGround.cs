@@ -7,13 +7,6 @@ public class BackGround : MonoBehaviour
     public GameManager battlesystem;
     public Animator Background;
 
-
-    void Start()
-    {
-
-    }
-
-    // Update is called once per frame
     void Update()
     {
         if (battlesystem.Stage < 6)
