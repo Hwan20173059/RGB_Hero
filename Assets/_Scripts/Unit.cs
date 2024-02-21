@@ -22,6 +22,7 @@ public class Unit : MonoBehaviour
 
 	public int EXP;
 
+	public GameObject attackParticle;
 
     private void Update()
     {
@@ -64,5 +65,9 @@ public class Unit : MonoBehaviour
 		Destroy(gameObject);
 	}
 
+    public void OnParticle()
+    {
+		attackParticle.SetActive(true);
+    }
 
 }
